@@ -1,0 +1,6 @@
+fda_adapted/
+real/
+synthetic/
+adapted_training/
+*.jpg
+*.txt
