@@ -6,7 +6,7 @@ from pathlib import Path
 
 def fourier_transform(image):
     """RGB image Fourier transform, returning amplitude and phase per channel."""
-    image = image.astype(np.float32)  # ensure numerical stability
+    image = image.astype(np.float32) 
 
     f = np.fft.fft2(image, axes=(0, 1))
     f_shift = np.fft.fftshift(f, axes=(0, 1))
@@ -19,7 +19,7 @@ def inverse_fourier_transform(amplitude, phase):
     f_shift = amplitude * np.exp(1j * phase)
     f = np.fft.ifftshift(f_shift, axes=(0, 1))
     image = np.fft.ifft2(f, axes=(0, 1))
-    return np.real(image)  # use real part instead of abs()
+    return np.real(image)  
 
 def apply_fda(source_img, target_img, beta=0.01):
     """
@@ -38,13 +38,13 @@ def apply_fda(source_img, target_img, beta=0.01):
     source_amp, source_phase = fourier_transform(source_img)
     target_amp, _ = fourier_transform(target_img)
 
-    # --- Proper central low-frequency mask ---
+    # Central low-frequency mask
     b = int(min(h, w) * beta)
 
     mask = np.zeros((h, w), dtype=np.float32)
     center_h, center_w = h // 2, w // 2
     mask[center_h-b:center_h+b, center_w-b:center_w+b] = 1
-    mask = np.expand_dims(mask, axis=2)  # broadcast over channels
+    mask = np.expand_dims(mask, axis=2) 
 
     # Swap low-frequency amplitudes
     new_amp = source_amp * (1 - mask) + target_amp * mask
@@ -140,7 +140,7 @@ def process_fda_with_labels(synth_img_dir, synth_label_dir, real_img_dir, output
         except Exception as e:
             print(f"Error processing {synth_file}: {e}")
     
-    print(f"\n✅ FDA Complete!")
+    print(f"\n FDA Complete")
     print(f"  Adapted images: {output_img_dir}")
     print(f"  Labels: {output_label_dir}")
     print(f"  Total processed: {len(synth_images)} images")
@@ -170,7 +170,7 @@ names:
     with open(yaml_file, 'w') as f:
         f.write(yaml_content)
     
-    print(f"✅ Created YOLO config: {yaml_file}")
+    print(f"Created YOLO config: {yaml_file}")
     return yaml_file
 
 # Main execution
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     SYNTH_LABEL_DIR = "synthetic/labels"
     REAL_IMG_DIR = "real/images"
     OUTPUT_DIR = "fda_adapted"  # Will create this folder
-    BETA = 0.01  # Start with 0.05, adjust based on results
+    BETA = 0.01  # adjust based on results
     
     # Your object classes (CHANGE THESE!)
     CLASS_NAMES = ["Gate", "Bin", "Path", "White Slalom", "Red Slalom", "Map"]  # Update with your actual classes
@@ -188,7 +188,6 @@ if __name__ == "__main__":
     # ===== RUN FDA PROCESSING =====
     print("Starting FDA processing...")
     
-    # 1. Apply FDA and copy labels
     img_dir, label_dir = process_fda_with_labels(
         synth_img_dir=SYNTH_IMG_DIR,
         synth_label_dir=SYNTH_LABEL_DIR,
@@ -197,14 +196,5 @@ if __name__ == "__main__":
         beta=BETA
     )
     
-    # 2. Create YOLO dataset config
     yaml_path = create_yolo_dataset_yaml(OUTPUT_DIR, CLASS_NAMES)
     
-    print("\n" + "="*50)
-    print("🎯 NEXT STEPS:")
-    print("="*50)
-    print(f"1. Check adapted images in: {img_dir}")
-    print(f"2. Verify labels in: {label_dir}")
-    print(f"3. Train YOLO using: {yaml_path}")
-    print("\nSample YOLO training command:")
-    print(f"yolo train data={yaml_path} model=yolov8n.pt epochs=100 imgsz=640")
