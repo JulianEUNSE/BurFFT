@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+import random
 import shutil
 from pathlib import Path
 
@@ -80,6 +81,7 @@ def process_fda_with_labels(synth_img_dir, synth_label_dir, real_img_dir, output
     
     real_images = sorted([f for f in os.listdir(real_img_dir) 
                          if f.lower().endswith(('.png', '.jpg', '.jpeg'))])
+    random.shuffle(real_images)
     
     print(f"Found {len(synth_images)} synthetic images")
     print(f"Found {len(real_images)} real images")
@@ -87,17 +89,6 @@ def process_fda_with_labels(synth_img_dir, synth_label_dir, real_img_dir, output
     if len(real_images) == 0:
         raise ValueError("No real images found!")
     
-    # Load all real images (for efficiency)
-    real_img_data = {}
-    for real_file in real_images[:min(100, len(real_images))]:  # Limit to 100 for memory
-        img_path = os.path.join(real_img_dir, real_file)
-        img = cv2.imread(img_path)
-        if img is not None:
-            real_img_data[real_file] = img
-        else:
-            print(f"Warning: Could not load {real_file}")
-    
-    print(f"Loaded {len(real_img_data)} real images for FDA")
     
     # Process each synthetic image
     for i, synth_file in enumerate(synth_images):
@@ -119,9 +110,11 @@ def process_fda_with_labels(synth_img_dir, synth_label_dir, real_img_dir, output
             continue
         
         # Select a real image (cycle through available ones)
-        real_key = list(real_img_data.keys())[i % len(real_img_data)]
-        real_img = real_img_data[real_key]
+        real_img_path = os.path.join(real_img_dir, real_images[i % len(real_images)])
+        real_img = cv2.imread(real_img_path)   
         
+        print(real_img_path)  
+                
         # Apply FDA
         try:
             adapted_img = apply_fda(synth_img, real_img, beta=beta)
@@ -176,11 +169,11 @@ names:
 # Main execution
 if __name__ == "__main__":
     # ===== CONFIGURE THESE PATHS =====
-    SYNTH_IMG_DIR = "synthetic/images"
-    SYNTH_LABEL_DIR = "synthetic/labels"
-    REAL_IMG_DIR = "real/images"
+    SYNTH_IMG_DIR = "FFTimages/synthetic/images"
+    SYNTH_LABEL_DIR = "FFTimages/synthetic/labels"
+    REAL_IMG_DIR = "FFTimages/real/images"
     OUTPUT_DIR = "fda_adapted"  # Will create this folder
-    BETA = 0.01  # adjust based on results
+    BETA = 0.004  # adjust based on results
     
     # Your object classes (CHANGE THESE!)
     CLASS_NAMES = ["Gate", "Bin", "Path", "White Slalom", "Red Slalom", "Map"]  # Update with your actual classes
